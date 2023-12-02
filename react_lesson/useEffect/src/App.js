@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {Container} from 'react-bootstrap';
 import './App.css';
 
@@ -49,56 +49,70 @@ import './App.css';
 //     }
 // }
 
-
-// function calcValue(){
-//     console.log('random');
+const Slider = () => { // 8:22
     
-//     return Math.random() * (50 - 1) + 1;
-// }
-
-const Slider = () => {
-    
-    // const slideStateArray = useState() // Когда запускается наша ф-ия, она вернет нам массив где 1-й элемент - это состояние, 2-й элемент - это ф-ия которая будет менять это состояние
-    const [slide, setSlide] = useState(0); // Помещать внутрь useState можно все, Можно сформировать много переменных состояния
-    
-    // Если наше начальное состояние будет вычисляться в какой то операции, то мы ее можем передавать внутрь useState
-    
-    // const [slide, setSlide] = useState(calcValue); // вызывается только один раз
-    // const [slide, setSlide] = useState(() => calcValue()); // Если нужно передать аргументы, вызывается только один раз
-    // const [slide, setSlide] = useState(calcValue()); //  // плохая практика, потому что компонент перерисовывается каждый раз когда срабатывает (изменяется) setState. 
-    // Ф-ия calcValue вызывается каждый раз, когда изменяется state
-    // const [slide, setSlide] = useState(0);
+    const [slide, setSlide] = useState(0);
     const [autoplay, setAutoplay] = useState(false);
     
-    // const [state, setState] = useState({slide: 0, autoplay: false});
+    useEffect(() => { // useEffect содержит внутри себя callback f-ion которая будет вызыватся, когда
+        document.title = `Slide: ${slide}`;
+    }, [])
     
+    // Эта ф-ия сработает сразу как только компонент отрендерился, а также когда компонент обновился (изменение props, state), объединяя тем самым componentDidMount and componentDidUpdate 
+    // useEffect(() => { 
+    //     console.log('Effect');
+    //     document.title = `Slide: ${slide}`;
+    // }, []) 
+    // [slide] - массив зависимостей, если ни одна из этих зависимостей не изменилась, то эффект у нас будет пропущен
+    // Проблема состоит в том, что useEffect следит за slide. Но когда у нас происходит изменения autoplay (useState), то помимо useState сразабывает useEffect. Поэтому используем 2-ым аргументов [] в useEffect
+    // Eсли setSlide(i) изменился, то запустится useEffect, который следит за slide
+    // При помощи [] в useEffect, мы может симулировать componentDidMount (вызываем useEffect один раз при 1-ом рэндере)
+    // Можно создавать несколько useEffect в 1-ом компоненте
+    
+    // useEffect(() => {
+    //     console.log('Effect Update');
+    //     document.title = `Slide: ${slide}`;
+    // }, [slide])
+    
+    // Timeout, обработчики событий - называются подписками. Все подписки необходимо удалять при удалении компонента. В class-овом компоненте это реализуется при помощи componentWillUnmount
+    // В useEffect это реализуется при помощи возвращением (return) call-back function из него
+    
+    // Это ф-ия при ее вызове будет возвращать какое-то сообщение
+    function logger() { 
+        console.log('log!');
+    }
+    
+    useEffect(() => {
+        console.log('Effect');
+        document.title = `Slide: ${slide}`;
+        
+        window.addEventListener('click', logger); 
+        // Обработчик события. Чтобы удалить обработчик события, нам нужно иметь ссылку на одну и ту же ф-ию
+        
+        return () => {
+            window.removeEventListener('click', logger); 
+            // Возвращаем callback function, чтобы удалить обработчик события
+        }
+    }, [slide]);
+    
+    // Если мы хотим отслеживать autoplay при каждом обновлении
+    useEffect(() => {
+        console.log('autoplay');
+    }, [autoplay])
+     
     function changeSlide(i) {
-        // setSlide(slide => slide + i);
-        
-        // В этой ситуации мы не учитываем ассинхронности ф-ий, врезультате наш state изменяется всего на 1, а по логике на 2.
-        // setSlide(slide + i);
-        // setSlide(slide + i);
-        // Решение
-        setSlide(slide => slide + i);
-        // setSlide(slide => slide + i);
-        
-        // setState(state => ({slide: state.slide + 1})); // Из-за специфмчности setState в состоянии будет лишь свойство slide, без autoplay
-        // setState(state => ({...state, slide: state.slide + i})); // Разворачиваем все свойства старого state (...state), изменяем одно из свойств
+        setSlide(slide => slide + i)
     }
     
     function toggleAutoplay() {
-        // setAutoplay(!autoplay);
-        setAutoplay(autoplay => !autoplay);
-        // setState(state => ({...state, autoplay: !state.autoplay}))
-        
+        setAutoplay(autoplay => !autoplay); 
     }
     
     return (
         <Container>
             <div className="slider w-50 m-auto">
-                <img src="https://www.planetware.com/photos-large/F/eiffel-tower.jpg " alt="slide" className="d-black w-100" />
+                <img src="https://www.planetware.com/photos-large/F/eiffel-tower.jpg " alt="slide" class="d-black w-100" />
                 <div className="text-center mt-5">Active Slide {slide} <br/> {autoplay ? 'auto' : null}</div>
-                {/* <div className="text-center mt-5">Active Slide {state.slide} <br/> {state.autoplay ? 'auto' : null}</div> */}
                 <div className="buttons mt-3">
                     <button
                         className="btn btn-primary me-2"
@@ -120,12 +134,18 @@ const Slider = () => {
         </Container>
     )
 }
-
-
+                
 function App() {
-  return (
-        <Slider/>
-  );
+    const [slider, setSlider] = useState(true); // Говорим, что слайдер будет виден на странице
+    
+    return (
+        <> 
+            <button onClick={() => setSlider(() => !slider)}>Click Me</button> {/* callback - потому что передаем аргументы */}
+            {slider ? <Slider/> : null} 
+            {/* Если slider в позиции true, мы возвращаем компонент, если нет то null */}
+            {/* Таким образом мы иметируем удаления обработчика событий на window, когда компонент slider был удален (описание выше) */}
+        </>
+    )
 }
 
 export default App;
