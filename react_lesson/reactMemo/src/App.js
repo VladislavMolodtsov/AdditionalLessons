@@ -1,4 +1,4 @@
-import {useState, memo} from 'react';
+import {useState, Component} from 'react';
 import {Container} from 'react-bootstrap';
 import './App.css';
 
@@ -11,41 +11,93 @@ import './App.css';
 // Ф-ия memo сравнивает поверхностно (это когда копия сравнивается на верхнем уровне вложености, а на уровень ниже идут уже ссылки на объек родителя)...
 //...Здесь тоже самое, сравнение пропсов происходит только по верхнему уровню
 // console.log('render') сного выводится 2 раза, так как ф-ия memo сравнивает поверхносно и она думает, что в объекте mail уже лежит другой пропс
+// При использовании PureComponent мы не видим повторного рендеринга, так как в нем уже встроена ф-ия сравнения. И он используем метод shouldComponentUpdate()
+// ... но если мы будем передавать props в виде сложных вложеных объектов, массивов, функций, то метод shouldComponentUpdate() не будет срабатывать
+// Если мы используем обычный классовый компонент (Component), а не PureComponent, то для сравнения props-ов мы должны использовать метод shouldComponentUpdate()
+// Вопрос. Как сравнивать state в функциональных компонентах. И обычно там используют прием когда state передают в props-ах
+// Итог ... 
+// 1. Функция memo используется для функциональных компонентов
+// 2. PureComponent or shouldComponentUpdate используется в классовых компонентах
+// 3. Применять такую мемоизацию стоит только на часто rende-щихся компонентах которые могут получают одинаковые prop
+// 4. Применять данный принцип ко всем подряд компонентам особенно тем которые получают разные props-ы не стоит, так как это будет негативно влиять на производительность
 
-function propsCompare(prevProps, nextProps) {
-    return prevProps.mail.name === nextProps.mail.name && prevProps.text === nextProps.text;
+// class Form extends PureComponent {
+class Form extends Component {
+
+        // Это компонент жизненного цыкла
+    shouldComponentUpdate(nextProps) { 
+        // Этот метод сравнивает не только props, но и state
+        // Должен ли компонент быть обновлен
+        if (this.props.mail.name === nextProps.mail.name) { 
+            // Если props совпадают, тогда компонент не должен быть обновлен
+            return false;
+        } return true;
+    }
+    // Сейчас при использовании метода. При нажатии кнопки вызова console.log('render'), второй раз render не происходит
+
+    render() {
+        console.log('render');
+    
+        return (
+            <Container>
+                <form className='w-50 border mt-5 p-3 m-auto'>
+                    <div className='mb-3'>
+                        <label htmlFor='exampleFormControlInput1' className='form-label mt-3'>Email address</label>
+                        <input
+                            // value={props.mail}
+                            value={this.props.mail.name}
+                            type='email'
+                            className='form-control'
+                            id='exampleFormControlInput1'/>
+                    </div>
+                    <div className='mb-3'>
+                        <label htmlFor='exampleFormControlTextarea1' className='form-label'>Example textarea</label>
+                        <textarea
+                            value={this.props.text}
+                            type='email'
+                            className='form-control'
+                            id='exampleFormControlTextarea1' rows='3'>
+                            </textarea>
+                    </div>
+                </form>
+            </Container>
+        )
+    }
 }
 
-const Form = memo((props) => {
+// function propsCompare(prevProps, nextProps) {
+//     return prevProps.mail.name === nextProps.mail.name && prevProps.text === nextProps.text;
+// }
 
-    console.log('render');
+// const Form = memo((props) => {
 
-    return (
-        <Container>
-            <form className='w-50 border mt-5 p-3 m-auto'>
-                <div className='mb-3'>
-                    <label htmlFor='exampleFormControlInput1' className='form-label mt-3'>Email address</label>
-                    <input
-                        // value={props.mail}
-                        value={props.mail.name}
-                        type='email'
-                        className='form-control'
-                        id='exampleFormControlInput1'/>
-                </div>
-                <div className='mb-3'>
-                    <label htmlFor='exampleFormControlTextarea1' className='form-label'>Example textarea</label>
-                    <textarea
-                        value={props.text}
-                        type='email'
-                        className='form-control'
-                        id='exampleFormControlTextarea1' rows='3'>
-                     </textarea>
-                </div>
-            </form>
-        </Container>
-    )
-}, propsCompare) // Первым аргументов у нас будет компонент который должен мемоизироватся, а вторым ф-ия сравнения
-// После создания ф-ии сравнения propsCompare. console.log('render') выводится только один раз (так как она сравнивает предыдущий и новый пропс)
+//     console.log('render');
+
+//     return (
+//         <Container>
+//             <form className='w-50 border mt-5 p-3 m-auto'>
+//                 <div className='mb-3'>
+//                     <label htmlFor='exampleFormControlInput1' className='form-label mt-3'>Email address</label>
+//                     <input
+//                         // value={props.mail}
+//                         value={props.mail.name}
+//                         type='email'
+//                         className='form-control'
+//                         id='exampleFormControlInput1'/>
+//                 </div>
+//                 <div className='mb-3'>
+//                     <label htmlFor='exampleFormControlTextarea1' className='form-label'>Example textarea</label>
+//                     <textarea
+//                         value={props.text}
+//                         type='email'
+//                         className='form-control'
+//                         id='exampleFormControlTextarea1' rows='3'>
+//                      </textarea>
+//                 </div>
+//             </form>
+//         </Container>
+//     )
+// }, propsCompare)
 
 function App() {
     const [data, setData] = useState({
@@ -64,20 +116,10 @@ function App() {
                 //     mail: 'second@example.com',
                 //     text: 'another text'
                 // })}>
-
-                // Меняем состояние на точно такое же которое и было, чтобы увидеть будет ли вывод 'render' повторно? ...
-                // ... Ответ да, так как объекты не равны друг другу если у них одинаковые внутренности (сравнение идет ...
-                // ... по ссылкам а не по значениям)
-                // Компонент не перерендывается так как мы использовали React.memo, а props абсолютно одинаковые
                 onClick={() => setData({
                     // mail: 'name@example.com',
                     mail: {
-                        // Теперь мы свойство mail передаем как объект.
-                        // При нажатии Click me мы в консоли видим второй раз 'render' так как React.memo думает что ...
-                        // ... это уже другой props лежит внутри mail ...
-                        // ... Потому что когда мы вызвали setData здесь был создан новый объект, который содержит те же данные
-                        // ... Решение написать свою ф-ию сравнения propsCompare
-                        name: 'name@example.com'
+                        name: 'second@example.com'
                     },
                     text: 'some text'
                 })}>
