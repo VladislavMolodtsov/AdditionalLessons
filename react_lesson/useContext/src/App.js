@@ -51,32 +51,42 @@ const Form = (props) => {
 }
 
 class InputComponent extends Component {
+
+    static contextType = dataContext;
+
     render() {
         return (
             // Consumer принемает в себя ф-ию и которая рендерит JSX элемент
-            <Consumer>
-                {
-                    // value - это props которое мы передали через Provider
-                    value => {
-                        return (
-                            <input
-                            value={value.mail}
-                            type='email'
-                            className='form-control'
-                            id='exampleFormControlInput1'/>
-                        )
-                    }
-                }
-            </Consumer>
+            // <Consumer>
+            //     {
+            //         // value - это props которое мы передали через Provider
+            //         value => {
+            //             return (
+            //                 <input
+            //                 value={value.mail}
+            //                 type='email'
+            //                 className='form-control'
+            //                 id='exampleFormControlInput1'/>
+            //             )
+            //         }
+            //     }
+            // </Consumer>
 
-            // <input
-            //     value={this.props.mail}
-            //     type='email'
-            //     className='form-control'
-            //     id='exampleFormControlInput1'/>
+            <input
+                // value={this.props.mail}
+                value={this.context.mail}
+                type='email'
+                className='form-control'
+                id='exampleFormControlInput1'/>
         )
     }
 }
+
+// Мы к inputContext привязываем контекст dataContext при помощи свойства .contextType ...
+// ... теперь внутри классового компонента благодаря такой записи у нас появилось такое свойство как this.context ...
+// ... мы его подставляем в строку 74
+// Есть и более современный способ получения контекста это использования static внутри классового компонента строка 55
+// InputComponent.contextType = dataContext;
 
 function App() {
     const [data, setData] = useState({
