@@ -1,5 +1,6 @@
-import {useState, Component, createContext, useContext} from 'react';
-import {Container} from 'react-bootstrap';
+import {useState} from 'react';
+import Form from './Form';
+import dataContext from './context';
 import './App.css';
 
 // Контекст позволяет передавать данные через дерево компонентов без необходимости передавать пропсы на промежуточных уровнях
@@ -10,118 +11,41 @@ import './App.css';
 // Можна задаться несколькими вопросами:
 // 1. Если компоненты у нас находятся в разных файлах, то как с ними взаимодействовать? ...
 // ... Ответ: на них действуют все те же правила import, export
-
-// Для начала создадим контекст. В переменную dataContext мы должны поместить результат вызова createContext
-// createContext - как единственный аргумент эта команда createContext принимает в себя значение по умолчанию
-const dataContext = createContext({
-    mail: 'name@example.com',
-    text: 'some text'
-});
-// createContext имеет несколько свойств - это Consumer, Provider, _currentValue
-// Consumer - это компонент который отвечает за получения этих данных, а также он подписывается на изменения ...
-// ... значений в context
-// Provider - отвечает за прокидывание другим компонентам props ниже по иерархии
-// Значение которое мы туда передали _currentValue: {mail: '', text: ''}
-// console.dir(dataContext);
-
-// Далее мы создадим 2-е новые переменные, которые называются Provider, Consumer
-// Зделали деструктуризацию для того, чтобы легче было работать с createContext
-const {Provider, Consumer} = dataContext;
-
-const Form = (props) => {
-
-    console.log('render');
-
-    return (
-        <Container>
-            <form className='w-50 border mt-5 p-3 m-auto'>
-                <div className='mb-3'>
-                    <label htmlFor='exampleFormControlInput1' className='form-label mt-3'>Email address</label>
-                    <InputComponent/>
-                </div>
-                <div className='mb-3'>
-                    <label htmlFor='exampleFormControlTextarea1' className='form-label'>Example textarea</label>
-                    <textarea
-                        value={props.text}
-                        type='email'
-                        className='form-control'
-                        id='exampleFormControlTextarea1' rows='3'>
-                     </textarea>
-                </div>
-            </form>
-        </Container>
-    )
-}
-
-// Теперь мы будем создавать ф-ий компонент с использованием хука useContext
-
-const InputComponent = () => {
-    const context = useContext(dataContext);
-
-    return (
-        <input
-            value={context.mail}
-            type='email'
-            className='form-control'
-            id='exampleFormControlInput1'/>
-    )
-}
-
-// class InputComponent extends Component {
-
-//     static contextType = dataContext;
-
-//     render() {
-//         return (
-//             Consumer принемает в себя ф-ию и которая рендерит JSX элемент
-//             <Consumer>
-//                 {
-//                     // value - это props которое мы передали через Provider
-//                     value => {
-//                         return (
-//                             <input
-//                             value={value.mail}
-//                             type='email'
-//                             className='form-control'
-//                             id='exampleFormControlInput1'/>
-//                         )
-//                     }
-//                 }
-//             </Consumer>
-
-//             <input
-//                 // value={this.props.mail}
-//                 value={this.context.mail}
-//                 type='email'
-//                 className='form-control'
-//                 id='exampleFormControlInput1'/>
-//         )
-//     }
-// }
-
-// Мы к inputContext привязываем контекст dataContext при помощи свойства .contextType ...
-// ... теперь внутри классового компонента благодаря такой записи у нас появилось такое свойство как this.context ...
-// ... мы его подставляем в строку 74
-// Есть и более современный способ получения контекста это использования static внутри классового компонента строка 55
-// InputComponent.contextType = dataContext;
+// Сейчас мы создадим несколько файлов context.js, Input.js, Form.js
+// 2. Может ли приложение использовать больше одного контекста? ...
+// ... Ответ: контекст может давать доступ к определенным данным. Под каждый контекст мы создаем новый Provider
+// 3. Можна ли данные как-то изменять? ...
+// ... Ответ: мы можем модифицировать эти данные
+const {Provider} = dataContext;
 
 function App() {
     const [data, setData] = useState({
         mail: 'name@example.com',
-        text: 'some text'
+        text: 'some text',
+        // Указали новое свойство (ссылку на нашу ф-ию)
+        forceChangeMail: forceChangeMail
     })
 
+    // Создадим ф-ию которая будет изменять почту в свойстве mail
+    function forceChangeMail() {
+        // setData({mail: 'test@gmail.com'}) // useState не изменяет наше состояние, он его просто перезаписывает...
+        // ...(тоесть нам нужно записать и все остальные состояния, как в примере ниже)
+        setData({...data, mail: 'test@gmail.com'})
+    }
+
     return (
-        // Когда мы создали деструктуризация Provider, Consumer. Мы обернули внутренности компонента App
-        // Далее мы должны передать те данные, которые будут доступны по иерархии ниже через attr value component Provid
-        // Если вдруг не будет props value, мы будем брать значение из контекста createContext, строка 13
-        // Все компоненты ниже по иерархии будут повторно рендерится, как только prop value у Provider будет менятся
+        // Когда мы не передадим attr value, это значит что value у нас станет в позицию undefinied ...
+        // Если мы используем какие-то новые свойства, то мы обязательно должны их указать в значениях по умолчанию
+        // В value мы не должны передавать прямых объектов, например: value={{something: 'something}} ...
+        // ... данная запись может вызвать проблемы с оптимизацией, так как у нас заного создается новый объект ...
+        // ... который не равен предыдущему
         <Provider value={data}>
             <Form text={data.text}/>
             <button
                 onClick={() => setData({
                     mail: 'second@example.com',
-                    text: 'some text'
+                    text: 'some text',
+                    forceChangeMail: forceChangeMail
                 })}>
                     Click Me
             </button>
