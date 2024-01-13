@@ -1,4 +1,4 @@
-import {useState, Component, createContext} from 'react';
+import {useState, Component, createContext, useContext} from 'react';
 import {Container} from 'react-bootstrap';
 import './App.css';
 
@@ -7,6 +7,9 @@ import './App.css';
 // Любой компонент может иметь любое количество конекстов 
 // Контекст используют для того, чтобы передавать определенные данные ниже по иерархии не используя props
 // Основными компонентами Контекста являются CreateContext, Provider, Consumer
+// Можна задаться несколькими вопросами:
+// 1. Если компоненты у нас находятся в разных файлах, то как с ними взаимодействовать? ...
+// ... Ответ: на них действуют все те же правила import, export
 
 // Для начала создадим контекст. В переменную dataContext мы должны поместить результат вызова createContext
 // createContext - как единственный аргумент эта команда createContext принимает в себя значение по умолчанию
@@ -50,37 +53,51 @@ const Form = (props) => {
     )
 }
 
-class InputComponent extends Component {
+// Теперь мы будем создавать ф-ий компонент с использованием хука useContext
 
-    static contextType = dataContext;
+const InputComponent = () => {
+    const context = useContext(dataContext);
 
-    render() {
-        return (
-            // Consumer принемает в себя ф-ию и которая рендерит JSX элемент
-            // <Consumer>
-            //     {
-            //         // value - это props которое мы передали через Provider
-            //         value => {
-            //             return (
-            //                 <input
-            //                 value={value.mail}
-            //                 type='email'
-            //                 className='form-control'
-            //                 id='exampleFormControlInput1'/>
-            //             )
-            //         }
-            //     }
-            // </Consumer>
-
-            <input
-                // value={this.props.mail}
-                value={this.context.mail}
-                type='email'
-                className='form-control'
-                id='exampleFormControlInput1'/>
-        )
-    }
+    return (
+        <input
+            value={context.mail}
+            type='email'
+            className='form-control'
+            id='exampleFormControlInput1'/>
+    )
 }
+
+// class InputComponent extends Component {
+
+//     static contextType = dataContext;
+
+//     render() {
+//         return (
+//             Consumer принемает в себя ф-ию и которая рендерит JSX элемент
+//             <Consumer>
+//                 {
+//                     // value - это props которое мы передали через Provider
+//                     value => {
+//                         return (
+//                             <input
+//                             value={value.mail}
+//                             type='email'
+//                             className='form-control'
+//                             id='exampleFormControlInput1'/>
+//                         )
+//                     }
+//                 }
+//             </Consumer>
+
+//             <input
+//                 // value={this.props.mail}
+//                 value={this.context.mail}
+//                 type='email'
+//                 className='form-control'
+//                 id='exampleFormControlInput1'/>
+//         )
+//     }
+// }
 
 // Мы к inputContext привязываем контекст dataContext при помощи свойства .contextType ...
 // ... теперь внутри классового компонента благодаря такой записи у нас появилось такое свойство как this.context ...
