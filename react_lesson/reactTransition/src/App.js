@@ -1,70 +1,53 @@
 import {useState} from 'react';
 import {Container} from 'react-bootstrap';
-import { Transition } from 'react-transition-group';
+import { CSSTransition } from 'react-transition-group';
 import './App.css';
+
+// Остальные 2-а компонента (SwitchTransition, TransitionGroup) позволяют нам модифицировать первые 2-а компонента (Transition, CSSTransition)
+// SwitchTransition позволяет изменять режим рендеринга с помощью аттрибута node со значениями (out-in, in-out)
+// out-in (компонент сначала дожыдается, пока старый компонент не исчезнет и только потом появляется)
+// in-out (компонент сначала дожидается, пока появится новый, и только потом старый компонент начинает удаляться )
+
+// TransitionGroup (он также оборачивает компонент как и SwitchTransition) оборачивает много компонентов
+// В TransitionGroup нет аттрибута in, именно он отвечает за отслеживание, появление или исчезновения компонента и применения анимации ...
+// ... к ним. Он просто отвечает за запуск анимации, а вот за стили отвечает CSSTransition. Поэтому анимация прописывается в самом компоненте через className в компоненте CSSTransition
+
+// Эти Transition подходять только для простых анимаций, если нужно создавать сложные анимации нужно использовать React-Motion
 
 const Modal = (props) => {
 
     const duration = 300;
 
-    // Начальное состояние, дефолтное значение для анимации модального окна
-    const defaultStyle = {
-        transition: `all ${duration}ms ease-in-out`,
-        opacity: 0,
-        visibility: 'hidden'
-    }
-
-    // Стили, которые у нас будут на переходных этапах
-    const transitionStyles = {
-        entering: { opacity: 1, visibility: 'visible' },
-        entered:  { opacity: 1, visibility: 'visible' },
-        exiting:  { opacity: 0, visibility: 'hidden' },
-        exited:  { opacity: 0, visibility: 'hidden' },
-    };
-
     return (
-        <Transition
+        <CSSTransition
             in={props.show}
             timeout={duration}
             // unmountOnExit
-            onEnter={() => props.setShowTrigger(false)} // Перед тем как будет происходить анимация мы будем скрыавать кнопку триггер
-            onExited={() => props.setShowTrigger(true)} // Когда анимация для исчезновения модального окна закончилась, тогда кнопка сного появится
-            // Мы можем не только показывать при помощи стилей эти элементы (скрывать, показывать), но и можем контролировать их рэндеринг
-            // Пока мое модальное окно открыто, его не будет существовать в DOM - дереве или наоборот, когда модальное окно закрывается ...
-            // ... , тогда оно полностью исчезает из DOM - дерева. Для этого существуют 2-а prop-a unmountOnExit, mountOnEnter
-            // Другой пример применения - это скрывать тот элемент, который вызвал какое-то действие с помощью методов ...
-            // ... onEnter, onEntering, onEntered, onExit, onExiting, onExited
-            // Сейчас мы скажем, что когда у нас модальное окно открыто, тогда мы будем скрывать кнопку которая вызывает его и наоборот
-            >
-            
-            {
-                // Это встроенное состояние в компонент Transition (сам себя отслеживает в каком состоянии он сейчас находится)
-                state => (
-                    // Добавляем inline стили через аттрибут style, для того, чтобы контролировать стили програмно
-                    // В ...transitionStyles[state] мы получаем только одно свойство из 4-х, которое будет подходить текущему состоянию
-                    <div className="modal mt-5 d-block" style={{
-                        ...defaultStyle,
-                        ...transitionStyles[state]
-                      }}>
-                        <div className="modal-dialog">
-                            <div className="modal-content">
-                                <div className="modal-header">
-                                    <h5 className="modal-title">Typical modal window</h5>
-                                    <button onClick={() => props.onClose(false)} type="button" className="btn-close" aria-label="Close"></button>
-                                </div>
-                                <div className="modal-body">
-                                    <p>Modal body content</p>
-                                </div>
-                                <div className="modal-footer">
-                                    <button onClick={() => props.onClose(false)} type="button" className="btn btn-secondary">Close</button>
-                                    <button onClick={() => props.onClose(false)} type="button" className="btn btn-primary">Save changes</button>
-                                </div>
-                            </div>
+            onEnter={() => props.setShowTrigger(false)}
+            onExited={() => props.setShowTrigger(true)}
+            // modal - это базовый класс. В файле css нужно прописать те классы, которые будут указывать на состояние этого компонента
+            classNames='modal'
+            mountOnEnter // Компонент будет появляться, только тогда, когда мы его вызовим. В DOM структуре нет блока модального окна при загрузке и появляется при нажатии на кнопку
+            unmountOnExit // Компонент бедет исчезать, только тогда, когда мы его уничтожим
+        >
+            <div className="modal mt-5 d-block">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">Typical modal window</h5>
+                            <button onClick={() => props.onClose(false)} type="button" className="btn-close" aria-label="Close"></button>
+                        </div>
+                        <div className="modal-body">
+                            <p>Modal body content</p>
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={() => props.onClose(false)} type="button" className="btn btn-secondary">Close</button>
+                            <button onClick={() => props.onClose(false)} type="button" className="btn btn-primary">Save changes</button>
                         </div>
                     </div>
-                )
-            }
-        </Transition>
+                </div>
+            </div>
+        </CSSTransition>
     )
 }
 
